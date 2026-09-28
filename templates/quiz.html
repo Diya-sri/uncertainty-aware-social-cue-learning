@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Quiz · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint: #6fae8c">
+  <div class="badge">{{ icon('help', 28) }}</div>
+  <div><h1>Feelings quiz</h1><p>Read a little story or look at a face. How might they feel?</p></div>
+</div>
+
+<div class="card quiz-card">
+  <div class="quiz-top">
+    <div class="tabs" role="tablist" aria-label="Quiz type">
+      <button class="tab" role="tab" id="tab-story" aria-selected="true">Stories</button>
+      <button class="tab" role="tab" id="tab-photo" aria-selected="false" {% if not has_faces %}disabled title="Add photos to static/quiz_faces to use this"{% endif %}>Faces</button>
+    </div>
+    <div class="row">
+      <span class="chip">Score <span id="score">0 / 0</span></span>
+      <span class="chip">Streak <span id="streak">0</span></span>
+    </div>
+  </div>
+
+  <div id="story-box" class="story" hidden>
+    <div class="story-emoji" aria-hidden="true">{{ icon('message', 34) }}</div>
+    <p class="story-text" id="story-text"></p>
+    <p class="muted" style="margin:0;font-weight:700">How might they feel?</p>
+  </div>
+  <img class="quiz-face" id="face" alt="A face showing a feeling" hidden>
+
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+  <p class="why" id="why" hidden></p>
+  <p class="why" id="support" hidden></p>
+  <div class="choices" id="choices"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:16px">
+    <button class="btn" id="next" hidden>Next →</button>
+  </div>
+</div>
+
+{% if not has_faces %}
+<p class="small muted" style="text-align:center;margin-top:16px">
+  Want face photos too? Add them to <code>static/quiz_faces/&lt;feeling&gt;/</code>
+  (for example with <code>scripts/split_dataset.py … --quiz-faces 6</code>). Only use photos whose license allows it.
+</p>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+const { Progress, Sound, confetti, EMOTIONS: E } = FL;
+const $ = id => document.getElementById(id);
+let mode = "story", right = 0, total = 0, streak = 0, current = null, answered = false;
+const recent = [];
+
+async function load() {
+  answered = false;
+  $("feedback").textContent = ""; $("why").hidden = true; $("support").hidden = true; $("next").hidden = true;
+  let r;
+  if (mode === "story") {
+    r = await fetch(`/api/story/next?exclude=${recent.join(",")}`).then(r => r.json());
+    recent.push(r.id); if (recent.length > 12) recent.shift();
+    $("story-text").textContent = r.text;
+    $("story-box").hidden = false; $("face").hidden = true;
+  } else {
+    r = await fetch("/api/quiz/next").then(r => r.json());
+    $("face").src = r.image;
+    $("face").hidden = false; $("story-box").hidden = true;
+  }
+  current = r;
+  $("choices").innerHTML = r.choices.map(c =>
+    `<button class="choice" data-id="${c.id}" style="--c:${E[c.id].color}"><span class="e">${c.emoji}</span>${c.name}</button>`).join("");
+}
+
+function setMode(m) {
+  mode = m;
+  $("tab-story").setAttribute("aria-selected", String(m === "story"));
+  $("tab-photo").setAttribute("aria-selected", String(m === "photo"));
+  load();
+}
+$("tab-story").onclick = () => setMode("story");
+$("tab-photo").onclick = () => setMode("photo");
+
+$("choices").addEventListener("click", ev => {
+  const btn = ev.target.closest(".choice");
+  if (!btn || answered || btn.classList.contains("wrong")) return;
+  const pick = btn.dataset.id, accepted = current.accepted || [current.answer], ok = accepted.includes(pick);
+  if (!ok) {
+    btn.classList.add("wrong");
+    $("feedback").textContent = mode === "story"
+      ? "That is possible too. For this story, try the feeling the clues point to most strongly."
+      : `Not quite. Look for: ${E[current.answer].tips[0].toLowerCase()}.`;
+    Sound.play("try");
+    streak = 0; $("streak").textContent = streak;
+    return;
+  }
+  answered = true; total++;
+  const firstTry = !$("choices").querySelector(".wrong");
+  if (firstTry) { right++; streak++; if (streak % 3 === 0) confetti(); }
+  btn.classList.add("correct");
+  const alternative = pick !== current.answer;
+  $("feedback").textContent = alternative
+    ? `Yes, ${E[pick].name.toLowerCase()} can make sense too—people can feel differently.`
+    : firstTry ? `Yes! ${E[pick].emoji} ${E[pick].name}.` : `That's it: ${E[pick].name.toLowerCase()}!`;
+  if (current.why) { $("why").textContent = current.why; $("why").hidden = false; }
+  $("support").textContent = `What might help: ${E[pick].support}`;
+  $("support").hidden = false;
+  Sound.play("success");
+  const firstPick = $("choices").querySelector(".wrong")?.dataset.id || pick;
+  Progress.add({ activity: "quiz", kind: mode, target: current.answer, picked: firstPick, success: firstTry });
+  $("score").textContent = `${right} / ${total}`; $("streak").textContent = streak;
+  $("next").hidden = false; $("next").focus({ preventScroll: true });
+});
+$("next").onclick = load;
+load();
+</script>
+{% endblock %}

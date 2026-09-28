@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Progress · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint: #9483e6">
+  <div class="badge">{{ icon('trend', 28) }}</div>
+  <div><h1>Progress</h1><p>For parents and teachers. Everything here is stored only in this browser.</p></div>
+</div>
+
+<div class="stack">
+  <div class="stats" id="kpis"></div>
+
+  <div class="card" id="recommendation" hidden>
+    <h2>Suggested next practice</h2>
+    <p id="recommendation-text" style="margin-bottom:0"></p>
+  </div>
+
+  <div class="card">
+    <h2>By feeling</h2>
+    <div class="emo-head"><span class="who"></span><span>Mirror game: faces made</span><span>Quiz: right first try</span></div>
+    <div class="emo-rows" id="by-emotion" style="margin-top:10px"></div>
+    <p class="small muted" style="margin-top:16px">Feelings with low scores are good ones to practise together. The Explore page has tips for each one.</p>
+  </div>
+
+  <div class="card">
+    <h2>Music sessions</h2>
+    <div class="table-wrap">
+      <table><thead><tr><th>When</th><th>Song</th><th>Most often</th><th>Length</th></tr></thead>
+      <tbody id="music"></tbody></table>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn secondary" id="export">⬇️ Download data (JSON)</button>
+    <button class="btn ghost" id="clear">Erase all progress</button>
+    <span class="small muted" id="clear-msg" role="status"></span>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const { Progress, EMOTIONS: E } = FL;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let confirmClear = false;
+
+function render() {
+  const ev = Progress.load().events;
+  const mirror = ev.filter(e => e.activity === "mirror"), quiz = ev.filter(e => e.activity === "quiz"),
+        communication = ev.filter(e => e.activity === "communication"),
+        music = ev.filter(e => e.activity === "music");
+  const ok = arr => arr.filter(e => e.success).length;
+  const pct = (a, b) => b ? Math.round(100 * a / b) : null;
+  const quizPct = pct(ok(quiz), quiz.length);
+  $("kpis").innerHTML = [
+    [`{{ icon('chat', 22) }}`, "Communication situations", communication.length || "–"],
+    [`{{ icon('smile', 22) }}`, "Mirror faces made", mirror.length ? `${ok(mirror)} / ${mirror.length}` : "–"],
+    [`{{ icon('help', 22) }}`, "Quiz, right first try", quizPct === null ? "–" : `${quizPct}%`],
+    [`{{ icon('music', 22) }}`, "Music sessions", music.length || "–"],
+  ].map(([i, l, v]) => `<div class="card stat"><div class="icon">${i}</div><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
+
+  const practised = Object.keys(E).map(k => {
+    const tries = mirror.filter(e => e.target === k);
+    return { k, tries: tries.length, rate: tries.length ? ok(tries) / tries.length : -1 };
+  });
+  const next = practised.some(x => x.tries)
+    ? practised.filter(x => x.tries).sort((a, b) => a.rate - b.rate)[0]
+    : null;
+  if (next) {
+    $("recommendation").hidden = false;
+    $("recommendation-text").textContent = `${E[next.k].emoji} Try ${E[next.k].name.toLowerCase()} expressions next. The mirror game will bring them up more often.`;
+  } else {
+    $("recommendation").hidden = true;
+  }
+
+  $("by-emotion").innerHTML = Object.keys(E).map(k => {
+    const m = mirror.filter(e => e.target === k), q = quiz.filter(e => e.target === k);
+    const mp = pct(ok(m), m.length), qp = pct(ok(q), q.length);
+    const mini = (p, txt) => `<div class="mini"><div class="track"><div class="fill" style="width:${p ?? 0}%"></div></div><span>${txt}</span></div>`;
+    return `<div class="emo-row" style="--c:${E[k].color}">
+      <span class="who"><span style="font-size:1.5rem">${E[k].emoji}</span>${E[k].name}</span>
+      ${mini(mp, m.length ? `${ok(m)} of ${m.length}` : "not tried yet")}
+      ${mini(qp, q.length ? `${qp}% of ${q.length}` : "not tried yet")}
+    </div>`;
+  }).join("");
+
+  $("music").innerHTML = music.length ? music.slice().reverse().map(e =>
+    `<tr><td>${new Date(e.t).toLocaleString()}</td><td>${esc(e.song)}</td><td>${E[e.top].emoji} ${E[e.top].name}</td><td>${e.seconds}s</td></tr>`).join("")
+    : `<tr><td colspan="4" class="muted">No music sessions yet.</td></tr>`;
+}
+
+$("export").onclick = () => {
+  const blob = new Blob([JSON.stringify(Progress.load(), null, 2)], { type: "application/json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "feel-and-learn-progress.json" });
+  a.click();
+};
+$("clear").onclick = () => {
+  if (!confirmClear) {
+    confirmClear = true;
+    $("clear").textContent = "Tap again to erase everything";
+    $("clear-msg").textContent = "";
+    setTimeout(() => { confirmClear = false; $("clear").textContent = "Erase all progress"; }, 4000);
+    return;
+  }
+  Progress.clear(); render(); confirmClear = false;
+  $("clear").textContent = "Erase all progress"; $("clear-msg").textContent = "All progress erased.";
+};
+render();
+</script>
+{% endblock %}

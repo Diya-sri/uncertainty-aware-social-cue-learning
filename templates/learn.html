@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Explore · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint: #5b8fd6">
+  <div class="badge">{{ icon('search', 28) }}</div>
+  <div><h1>Explore your face</h1><p>Try different faces. The app shows which feeling it thinks it sees.</p></div>
+</div>
+
+<div class="stage">
+  <div>
+    <div class="camera" id="cam">
+      <div class="cam-empty">
+        <div class="big">{{ icon('camera', 48) }}</div>
+        <p>Turn on the camera to begin. Nothing is recorded.</p>
+        <button class="btn" data-click="start">Turn on camera</button>
+      </div>
+      <img class="upload-preview" id="photo-preview" alt="Uploaded face preview" hidden>
+    </div>
+    <div class="row cam-controls">
+      <button class="btn" id="start" hidden>Start camera</button>
+      <button class="btn ghost" id="stop" disabled>Stop</button>
+      <span class="small muted" id="status" role="status"></span>
+    </div>
+    <label class="dropzone photo-upload" id="photo-drop" for="photo-file">
+      <span class="big">{{ icon('image', 30) }}</span>
+      <strong>Or upload a face photo</strong>
+      <span class="small muted">JPG or PNG, maximum 3 MB. Sent to the app server for inference only; not intentionally stored.</span>
+      <input type="file" id="photo-file" accept="image/jpeg,image/png,image/webp">
+    </label>
+  </div>
+
+  <div class="card emotion-card" id="emotion-card">
+    <div class="emotion-big" id="emoji" aria-hidden="true">🙂</div>
+    <div class="emotion-name" id="name" aria-live="polite">Waiting for a face</div>
+    <div class="meter" aria-hidden="true"><div id="meter"></div></div>
+    <p class="small muted" id="conf">&nbsp;</p>
+    <div class="tips">
+      <h3 id="tips-title">How to spot it</h3>
+      <ul id="tips"><li class="muted">Tips appear when a face is found.</li></ul>
+    </div>
+    <details><summary>All scores</summary><div class="bars" id="bars"></div></details>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const { EmotionCamera, renderBars, pop, Status, EMOTIONS: E } = FL;
+const $ = id => document.getElementById(id);
+const recent = [];   // average the last few predictions so the label doesn't flicker
+let shown = null;
+function paint(scores) {
+    const avg = scores;
+    const [top, p] = Object.entries(avg).sort((a, b) => b[1] - a[1])[0];
+    const e = E[top];
+    if (p < Status.unsure_below) {
+      $("emotion-card").style.setProperty("--c", "#c9d2d9");
+      if (shown !== "unsure") { $("emoji").textContent = "🤔"; pop($("emoji")); shown = "unsure"; }
+      $("name").textContent = "Not sure";
+      $("meter").style.width = `${Math.round(p * 100)}%`;
+      $("conf").textContent = `Maybe ${e.name.toLowerCase()}? Try a clearer, front-facing photo.`;
+      $("tips-title").textContent = "Help the app see the expression";
+      $("tips").innerHTML = "<li>Use even lighting</li><li>Face forward</li><li>Keep the face large and unobstructed</li>";
+    } else {
+      $("emotion-card").style.setProperty("--c", e.color);
+      if (shown !== top) { $("emoji").textContent = e.emoji; pop($("emoji")); shown = top; }
+      $("name").textContent = e.name;
+      $("meter").style.width = `${Math.round(p * 100)}%`;
+      $("conf").textContent = `Calibrated confidence: ${Math.round(p * 100)}%`;
+      $("tips-title").textContent = "How to spot it";
+      $("tips").innerHTML = e.tips.map(t => `<li>${t}</li>`).join("");
+    }
+    renderBars($("bars"), avg);
+}
+const cam = new EmotionCamera($("cam"), {
+  intervalMs: 500,
+  onResult(r) {
+    if (r.error || !r.faces.length) return;
+    recent.push(r.faces[0].scores); if (recent.length > 4) recent.shift();
+    const avg = {};
+    Object.keys(E).forEach(k => avg[k] = recent.reduce((s, x) => s + (x[k] || 0), 0) / recent.length);
+    paint(avg);
+  },
+});
+$("start").onclick = async () => {
+  $("status").textContent = "";
+  $("photo-preview").hidden = true;
+  try { await cam.start(); $("start").disabled = true; $("stop").disabled = false; }
+  catch (e) { $("status").textContent = e.message; }
+};
+$("stop").onclick = () => { cam.stop(); $("start").disabled = false; $("stop").disabled = true; };
+$("photo-file").onchange = async e => {
+  const file = e.target.files[0]; if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { $("status").textContent = "Image is larger than 3 MB."; return; }
+  cam.stop(); $("start").disabled = false; $("stop").disabled = true; recent.length = 0;
+  const preview = $("photo-preview"); preview.src = URL.createObjectURL(file); preview.hidden = false;
+  $("cam").querySelector(".cam-empty").hidden = true;
+  $("status").textContent = "Analyzing photo…";
+  try {
+    const body = new FormData(); body.append("image", file);
+    const response = await fetch("/api/predict", {method:"POST", body});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Prediction failed");
+    if (!result.faces.length) throw new Error("No clear face found. Try a front-facing photo with good lighting.");
+    paint(result.faces[0].scores); $("status").textContent = "Photo analyzed. It was not saved.";
+  } catch (err) { $("status").textContent = err.message; }
+  finally { e.target.value = ""; }
+};
+renderBars($("bars"), {});
+</script>
+{% endblock %}

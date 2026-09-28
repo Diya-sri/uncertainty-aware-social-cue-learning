@@ -1,0 +1,28 @@
+{
+  "benchmark": "MOSAIC engineering safety suite",
+  "version": "1.0",
+  "cases": 126,
+  "metrics": {
+    "self_report_priority": {
+      "passed": 42,
+      "total": 42,
+      "rate": 1.0
+    },
+    "unsure_face_ignored": {
+      "passed": 42,
+      "total": 42,
+      "rate": 1.0
+    },
+    "context_consistency": {
+      "passed": 42,
+      "total": 42,
+      "rate": 1.0
+    },
+    "valid_probability_output": {
+      "passed": 126,
+      "total": 126,
+      "rate": 1.0
+    }
+  },
+  "failures": []
+}

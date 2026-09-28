@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Mirror game · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint: #efb92f">
+  <div class="badge">{{ icon('smile', 28) }}</div>
+  <div><h1>Mirror game</h1><p>Make the face that's asked for and hold it until the circle is full.</p></div>
+</div>
+
+<div class="stage">
+  <div>
+    <div class="camera" id="cam">
+      <div class="cam-empty">
+        <div class="big">{{ icon('smile', 48) }}</div>
+        <p>Turn on the camera and get ready to make some faces!</p>
+        <button class="btn" data-click="start">Start the game</button>
+      </div>
+    </div>
+    <div class="row cam-controls">
+      <button class="btn" id="start" hidden>Start game</button>
+      <button class="btn secondary" id="skip" disabled>Try another face</button>
+      <button class="btn ghost" id="stop" disabled>Stop</button>
+    </div>
+    <p class="small muted" id="status" role="status"></p>
+  </div>
+
+  <div class="card emotion-card" id="card" style="text-align:center">
+    <p class="muted" style="margin:0;font-weight:700">Can you make a…</p>
+    <div class="ring" id="ring"><div class="ring-inner" id="target-emoji" aria-hidden="true">❔</div></div>
+    <div class="emotion-name" id="target-name" aria-live="polite">Press start</div>
+    <div class="feedback" id="result" aria-live="polite"></div>
+    <div class="stars" id="stars" aria-label="Stars earned"></div>
+    <div class="tips"><h3>Tips</h3><ul id="tips"><li class="muted">Tips for each face appear here.</li></ul></div>
+    <div style="margin-top:14px;text-align:left">
+      <label class="toggle"><input type="checkbox" id="show-live"> Show what the camera sees</label>
+      <p class="small muted" id="live" style="margin:6px 0 0"></p>
+    </div>
+    <details style="text-align:left"><summary>Choose which faces to practise</summary>
+      <div class="pick-list" id="pick"></div>
+    </details>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const { EmotionCamera, Progress, Sound, confetti, pop, EMOTIONS: E } = FL;
+const $ = id => document.getElementById(id);
+const HOLD_NEEDED = 3;          // consecutive matching predictions (~1.8 s)
+const MIN_CONF = 0.0;          // threshold is model-specific and supplied by /api/status
+const TIME_LIMIT_MS = 30000;    // after this it gently moves on
+let pool = ["happiness", "sadness", "surprise", "anger", "neutral", "fear"];
+let target = null, hold = 0, stars = 0, startedAt = 0, done = false;
+
+$("pick").innerHTML = Object.keys(E).map(k =>
+  `<label style="--c:${E[k].color}"><input type="checkbox" value="${k}" ${pool.includes(k) ? "checked" : ""}> ${E[k].emoji} ${E[k].name}</label>`).join("");
+$("pick").addEventListener("change", () => {
+  pool = [...$("pick").querySelectorAll("input:checked")].map(i => i.value);
+  if (!pool.length) pool = ["happiness"];
+});
+
+function paintStars() {
+  $("stars").innerHTML = stars ? "⭐".repeat(Math.min(stars, 8)) + `<span class="count">${stars} star${stars === 1 ? "" : "s"}</span>` : "";
+}
+function setHold(n) { $("ring").style.setProperty("--p", Math.min(1, n / HOLD_NEEDED)); }
+
+function next() {
+  const options = pool.filter(p => p !== target);
+  // Adaptive practice: emotions with more unsuccessful attempts appear more often.
+  const history = Progress.load().events.filter(e => e.activity === "mirror");
+  const weighted = options.flatMap(k => {
+    const attempts = history.filter(e => e.target === k);
+    const misses = attempts.filter(e => !e.success).length;
+    return Array(1 + Math.min(misses, 4)).fill(k);
+  });
+  target = weighted[Math.floor(Math.random() * weighted.length)] || pool[0];
+  hold = 0; done = false; startedAt = Date.now();
+  $("card").style.setProperty("--c", E[target].color);
+  $("ring").style.setProperty("--c", E[target].color);
+  $("target-emoji").textContent = E[target].emoji; pop($("target-emoji"));
+  $("target-name").textContent = `${E[target].name} face?`;
+  $("tips").innerHTML = E[target].tips.map(t => `<li>${t}</li>`).join("");
+  setHold(0);
+  $("result").textContent = "";
+}
+
+const cam = new EmotionCamera($("cam"), {
+  intervalMs: 600,
+  drawBoxes: false,
+  onResult(r) {
+    if (r.error || done || !target) return;
+    const f = r.faces[0];
+    $("live").textContent = $("show-live").checked && f ? `Camera sees: ${E[f.emotion].emoji} ${E[f.emotion].name}` : "";
+    const match = f && !f.unsure && f.emotion === target && f.confidence >= MIN_CONF;
+    hold = match ? hold + 1 : Math.max(0, hold - 1);
+    setHold(hold);
+    if (hold >= HOLD_NEEDED) {
+      done = true; stars++; paintStars();
+      $("result").textContent = `Great ${E[target].name.toLowerCase()} face!`;
+      Sound.play("success"); confetti();
+      Progress.add({ activity: "mirror", target, success: true, seconds: (Date.now() - startedAt) / 1000 });
+      setTimeout(next, 2600);
+    } else if (Date.now() - startedAt > TIME_LIMIT_MS) {
+      done = true;
+      $("result").textContent = "Nice try! Let's try a different one.";
+      Progress.add({ activity: "mirror", target, success: false, seconds: TIME_LIMIT_MS / 1000 });
+      setTimeout(next, 2000);
+    }
+  },
+});
+
+$("start").onclick = async () => {
+  $("status").textContent = "";
+  try {
+    await cam.start(); next();
+    $("start").disabled = true; $("stop").disabled = false; $("skip").disabled = false;
+  } catch (e) { $("status").textContent = e.message; }
+};
+$("skip").onclick = next;
+$("stop").onclick = () => {
+  cam.stop(); target = null; setHold(0);
+  $("target-emoji").textContent = "❔"; $("target-name").textContent = "Press start"; $("result").textContent = "";
+  $("start").disabled = false; $("stop").disabled = true; $("skip").disabled = true;
+};
+</script>
+{% endblock %}

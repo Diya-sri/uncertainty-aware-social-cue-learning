@@ -1,0 +1,6 @@
+# Run the app with the fine-tuned EfficientNet model.
+flask>=3.0
+numpy>=1.26
+opencv-python-headless>=4.9,<5   # OpenCV 5 removed the Haar face detector
+scikit-learn>=1.4               # compact PCA + RBF-SVM ensemble head
+tensorflow-cpu>=2.16,<2.21      # loads the shipped EfficientNet .keras model

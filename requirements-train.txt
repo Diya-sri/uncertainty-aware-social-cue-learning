@@ -1,0 +1,11 @@
+# Split data, run the baseline and train the default (NumPy) model
+numpy>=1.26
+pillow>=10
+opencv-python-headless>=4.9,<5   # OpenCV 5 removed the Haar face detector
+scikit-learn>=1.4
+matplotlib>=3.8
+h5py>=3.10          # only for scripts/convert_mobilenetv2.py
+# Optional: full fine-tuning with scripts/train.py (GPU recommended)
+# tensorflow>=2.16
+# Recommended for better accuracy: install TensorFlow and use scripts/train.py with
+# --pretrain-data pointing to a cleaned FER-2013-style train/val directory.

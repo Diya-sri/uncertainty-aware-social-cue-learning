@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Music feelings · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint: #ec7fae">
+  <div class="badge">{{ icon('music', 28) }}</div>
+  <div><h1>Music feelings</h1><p>Pick a song. While it plays, the camera notices how your face reacts.</p></div>
+</div>
+
+<div class="stage">
+  <div>
+    <div class="camera" id="cam">
+      <div class="cam-empty">
+        <div class="big">{{ icon('headphones', 48) }}</div>
+        <p>The camera turns on by itself when the music starts.</p>
+      </div>
+    </div>
+    <p class="small muted" id="status" role="status"></p>
+  </div>
+  <div class="card">
+    <h2>1. Choose a song</h2>
+    <label class="dropzone" id="drop" for="file">
+      <span class="big">{{ icon('music', 30) }}</span>
+      <strong id="drop-text">Click to pick a song, or drop it here</strong>
+      <span class="small muted">MP3, WAV and other audio files. The song stays on this device.</span>
+      <input type="file" id="file" accept="audio/*">
+    </label>
+    <div class="now-playing" id="now-playing" hidden>
+      <h2 style="margin-top:18px">2. Press play</h2>
+      <audio id="player" controls></audio>
+    </div>
+    <div class="live-emotion" id="now" aria-live="polite"></div>
+  </div>
+</div>
+
+<div class="card" id="summary" style="margin-top:20px" hidden>
+  <div class="summary-top">
+    <div class="emotion-big" id="sum-emoji"></div>
+    <div>
+      <h2 style="margin:0">How your face reacted</h2>
+      <p class="muted" id="summary-song" style="margin:4px 0 0"></p>
+    </div>
+  </div>
+  <div class="timeline" id="timeline" title="Each slice is about one second"></div>
+  <div class="row small muted" style="justify-content:space-between;margin-top:4px"><span>start of song</span><span>end</span></div>
+  <div class="legend" id="legend"></div>
+  <div class="bars" id="dist"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const { EmotionCamera, Progress, renderBars, EMOTIONS: E } = FL;
+const $ = id => document.getElementById(id);
+let samples = [], songName = "";
+
+$("legend").innerHTML = Object.keys(E).map(k => `<span><i style="background:${E[k].color}"></i>${E[k].name}</span>`).join("")
+  + `<span><i style="background:#c9d2d9"></i>Not sure</span><span><i style="background:var(--track)"></i>No face</span>`;
+
+const cam = new EmotionCamera($("cam"), {
+  intervalMs: 1000,
+  onResult(r) {
+    if (r.error) return;
+    const f = r.faces[0];
+    samples.push(!f ? null : f.unsure ? "unsure" : f.emotion);
+    $("now").textContent = !f ? "" : f.unsure ? "🤔 Not sure" : `${E[f.emotion].emoji} ${E[f.emotion].name}`;
+  },
+});
+
+function useFile(f) {
+  if (!f || !f.type.startsWith("audio")) { $("status").textContent = "That doesn't look like an audio file."; return; }
+  songName = f.name;
+  $("drop-text").textContent = f.name;
+  $("player").src = URL.createObjectURL(f);
+  $("now-playing").hidden = false;
+  $("status").textContent = "";
+}
+$("file").onchange = () => useFile($("file").files[0]);
+["dragenter", "dragover"].forEach(t => $("drop").addEventListener(t, e => { e.preventDefault(); $("drop").classList.add("drag"); }));
+["dragleave", "drop"].forEach(t => $("drop").addEventListener(t, e => { e.preventDefault(); $("drop").classList.remove("drag"); }));
+$("drop").addEventListener("drop", e => useFile(e.dataTransfer.files[0]));
+
+$("player").onplay = async () => {
+  samples = []; $("summary").hidden = true;
+  try { await cam.start(); } catch (e) { $("status").textContent = e.message; }
+};
+const finish = () => {
+  if (!cam.running) return;
+  cam.stop(); $("now").textContent = "";
+  const seen = samples.filter(e => e && e !== "unsure");
+  if (!seen.length) { $("status").textContent = "The app couldn't read your face clearly during the song. Try sitting in front of the camera in good light."; return; }
+  const dist = {}; Object.keys(E).forEach(k => dist[k] = 0);
+  seen.forEach(e => dist[e]++);
+  Object.keys(dist).forEach(k => dist[k] /= seen.length);
+  $("timeline").innerHTML = samples.map(e =>
+    `<span style="background:${!e ? "var(--track)" : e === "unsure" ? "#c9d2d9" : E[e].color}" title="${!e ? "no face" : e === "unsure" ? "not sure" : E[e].name}"></span>`).join("");
+  renderBars($("dist"), dist);
+  const top = Object.entries(dist).sort((a, b) => b[1] - a[1])[0][0];
+  $("sum-emoji").textContent = E[top].emoji;
+  $("summary-song").textContent = `${songName} · most often ${E[top].name.toLowerCase()}`;
+  $("summary").hidden = false;
+  $("summary").scrollIntoView({ behavior: FL.reduceMotion ? "auto" : "smooth", block: "start" });
+  Progress.add({ activity: "music", song: songName, seconds: samples.length, distribution: dist, top });
+};
+$("player").onpause = finish;
+$("player").onended = finish;
+</script>
+{% endblock %}

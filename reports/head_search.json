@@ -1,0 +1,102 @@
+[
+  {
+    "name": "pca256-rbf C=1 g=0.003",
+    "val_macro_f1": 0.4711,
+    "val_accuracy": 0.5034
+  },
+  {
+    "name": "linearSVC C=0.0001",
+    "val_macro_f1": 0.4701,
+    "val_accuracy": 0.5134
+  },
+  {
+    "name": "pca256-rbf C=1 g=scale",
+    "val_macro_f1": 0.4699,
+    "val_accuracy": 0.5034
+  },
+  {
+    "name": "linearSVC C=0.0003",
+    "val_macro_f1": 0.4677,
+    "val_accuracy": 0.5168
+  },
+  {
+    "name": "pca256-rbf C=1 g=0.001",
+    "val_macro_f1": 0.4669,
+    "val_accuracy": 0.4933
+  },
+  {
+    "name": "pca256-rbf C=0.3 g=0.003",
+    "val_macro_f1": 0.4627,
+    "val_accuracy": 0.4832
+  },
+  {
+    "name": "pca256-rbf C=10 g=scale",
+    "val_macro_f1": 0.4598,
+    "val_accuracy": 0.5067
+  },
+  {
+    "name": "pca256-rbf C=3 g=0.003",
+    "val_macro_f1": 0.4563,
+    "val_accuracy": 0.5
+  },
+  {
+    "name": "pca256-rbf C=3 g=scale",
+    "val_macro_f1": 0.4551,
+    "val_accuracy": 0.4966
+  },
+  {
+    "name": "logistic C=0.003",
+    "val_macro_f1": 0.4489,
+    "val_accuracy": 0.5034
+  },
+  {
+    "name": "logistic C=0.01",
+    "val_macro_f1": 0.4457,
+    "val_accuracy": 0.5
+  },
+  {
+    "name": "linearSVC C=0.001",
+    "val_macro_f1": 0.4449,
+    "val_accuracy": 0.5
+  },
+  {
+    "name": "linearSVC C=3e-05",
+    "val_macro_f1": 0.4449,
+    "val_accuracy": 0.4866
+  },
+  {
+    "name": "pca256-rbf C=0.3 g=scale",
+    "val_macro_f1": 0.4417,
+    "val_accuracy": 0.4597
+  },
+  {
+    "name": "logistic C=0.0003",
+    "val_macro_f1": 0.4401,
+    "val_accuracy": 0.4799
+  },
+  {
+    "name": "pca256-rbf C=10 g=0.001",
+    "val_macro_f1": 0.4356,
+    "val_accuracy": 0.4732
+  },
+  {
+    "name": "pca256-rbf C=3 g=0.001",
+    "val_macro_f1": 0.4348,
+    "val_accuracy": 0.4664
+  },
+  {
+    "name": "logistic C=0.03",
+    "val_macro_f1": 0.4344,
+    "val_accuracy": 0.4899
+  },
+  {
+    "name": "pca256-rbf C=10 g=0.003",
+    "val_macro_f1": 0.4295,
+    "val_accuracy": 0.4765
+  },
+  {
+    "name": "pca256-rbf C=0.3 g=0.001",
+    "val_macro_f1": 0.4237,
+    "val_accuracy": 0.4698
+  }
+]

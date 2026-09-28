@@ -1,0 +1,80 @@
+{
+  "model": "0.70 shipped calibrated linear head + 0.30 PCA-256 RBF-SVM",
+  "test_accuracy": 0.4966,
+  "test_macro_f1": 0.4416,
+  "test_images": 298,
+  "confusion_matrix": [
+    [
+      9,
+      7,
+      3,
+      2,
+      5,
+      4,
+      0
+    ],
+    [
+      5,
+      15,
+      3,
+      2,
+      1,
+      3,
+      1
+    ],
+    [
+      3,
+      5,
+      7,
+      1,
+      4,
+      4,
+      6
+    ],
+    [
+      1,
+      5,
+      1,
+      63,
+      6,
+      8,
+      5
+    ],
+    [
+      2,
+      2,
+      0,
+      9,
+      13,
+      9,
+      3
+    ],
+    [
+      2,
+      6,
+      1,
+      5,
+      12,
+      19,
+      0
+    ],
+    [
+      3,
+      1,
+      4,
+      3,
+      0,
+      3,
+      22
+    ]
+  ],
+  "labels": [
+    "anger",
+    "disgust",
+    "fear",
+    "happiness",
+    "neutral",
+    "sadness",
+    "surprise"
+  ]
+}

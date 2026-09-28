@@ -1,0 +1,150 @@
+{
+  "backend": "rules-v1",
+  "split": "dev",
+  "n": 45,
+  "fallbacks": 0,
+  "criteria": {
+    "assumes_feeling": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "positives": 13,
+      "n": 45
+    },
+    "judgmental": {
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909,
+      "accuracy": 0.956,
+      "positives": 12,
+      "n": 45
+    },
+    "pressuring": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "positives": 10,
+      "n": 45
+    },
+    "checks_in": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "positives": 19,
+      "n": 45
+    },
+    "respectful": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "positives": 19,
+      "n": 45
+    }
+  },
+  "macro_f1_criteria": 0.977,
+  "exact_match": 0.956,
+  "verdict_accuracy": 1.0,
+  "by_category_verdict_accuracy": {
+    "clear_assumption": {
+      "correct": 6,
+      "n": 6,
+      "accuracy": 1.0
+    },
+    "clear_respectful": {
+      "correct": 10,
+      "n": 10,
+      "accuracy": 1.0
+    },
+    "dismissive_reassurance": {
+      "correct": 1,
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "hedged_check": {
+      "correct": 3,
+      "n": 3,
+      "accuracy": 1.0
+    },
+    "judgmental": {
+      "correct": 6,
+      "n": 6,
+      "accuracy": 1.0
+    },
+    "minimal": {
+      "correct": 2,
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "negation": {
+      "correct": 2,
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "observation": {
+      "correct": 2,
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "polite_pressure": {
+      "correct": 2,
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "pressure": {
+      "correct": 5,
+      "n": 5,
+      "accuracy": 1.0
+    },
+    "presupposing_question": {
+      "correct": 3,
+      "n": 3,
+      "accuracy": 1.0
+    },
+    "sarcasm": {
+      "correct": 2,
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "self_disclosure": {
+      "correct": 1,
+      "n": 1,
+      "accuracy": 1.0
+    }
+  },
+  "majority_baseline": {
+    "macro_f1_criteria": 0.0,
+    "exact_match": 0.022,
+    "verdict_accuracy": 0.578
+  },
+  "failures": [
+    {
+      "id": "dev-029",
+      "category": "presupposing_question",
+      "message": "Why are you ignoring me?",
+      "wrong": {
+        "judgmental": {
+          "gold": true,
+          "pred": false
+        }
+      },
+      "suggestion": "Try: describe what you noticed, then offer a choice. For example: \"I noticed ___. Would you like ___, or ___? Either is okay.\""
+    },
+    {
+      "id": "dev-039",
+      "category": "polite_pressure",
+      "message": "Can you just tell me what's wrong already?",
+      "wrong": {
+        "judgmental": {
+          "gold": true,
+          "pred": false
+        }
+      },
+      "suggestion": "Try: describe what you noticed, then offer a choice. For example: \"I noticed ___. Would you like ___, or ___? Either is okay.\""
+    }
+  ],
+  "note": "Single-annotator labels written by the project author; the rule baseline was developed on the dev split. Scores measure agreement with this rubric, not real-world helpfulness."
+}

@@ -1,0 +1,21 @@
+{
+  "labels": [
+    "anger",
+    "disgust",
+    "fear",
+    "happiness",
+    "neutral",
+    "sadness",
+    "surprise"
+  ],
+  "image_size": 224,
+  "color": "grayscale_as_rgb",
+  "pixel_range": [
+    0,
+    255
+  ],
+  "temperature": 1.099188,
+  "unsure_below": 0.425,
+  "flip_tta_weight": 0.0,
+  "calibration_status": "validation-temperature-scaled"
+}

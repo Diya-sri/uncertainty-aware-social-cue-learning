@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}About · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="badge">{{ icon('info', 28) }}</div>
+  <div><h1>About this app</h1><p>How it works, what it does with your camera, and what it can't do.</p></div>
+</div>
+
+<div class="card prose">
+  <h2>What it does</h2>
+  <p>MOSAIC-X helps learners practise a respectful social-cue process: <strong>notice what happened, consider multiple explanations, and ask rather than assume</strong>. Expression recognition is an optional demonstration—not the source of truth.</p>
+  <div class="emoji-strip" style="margin:0 0 12px">
+    {% for k, e in EMOTIONS.items() %}<span class="chip" style="background: color-mix(in srgb, {{ e.color }} 20%, var(--card))">{{ e.emoji }} {{ e.name }}</span>{% endfor %}
+  </div>
+  <p>An EfficientNetB0 model can suggest which of seven visible expression categories appears in a picture. Its output is treated as uncertain evidence. A person's own words always have priority.</p>
+
+  <h2>Who it is for</h2>
+  <p>It is a portfolio prototype for learners, families and educators to explore communication strategies together. It has not been evaluated with autistic users, so it makes no claim that it improves real-world outcomes.</p>
+
+  <h2>Privacy</h2>
+  <ul>
+    <li>Camera pictures go only to this app's server, which normally runs on this computer. Each one is used for a single guess and then thrown away: never saved, never emailed.</li>
+    <li>Songs you pick stay in your browser and are not uploaded.</li>
+    <li>Progress is saved only in this browser. You can download or erase it on the Progress page.</li>
+  </ul>
+
+  <h2>Limits: please read</h2>
+  <ul>
+    <li><strong>It still makes mistakes.</strong> V3 is right on <strong>62.1%</strong> of the 298-image target benchmark across seven expression categories. This improves the original 49.7% model, but is not reliable enough to grade or diagnose anyone.</li>
+    <li><strong>Confidence is calibrated, not certainty.</strong> Temperature scaling and a 42.5% threshold were selected on validation data. On the benchmark, accepted predictions reached 69.7% accuracy at 73.2% coverage.</li>
+    <li><strong>The benchmark is now developmental.</strong> Results from multiple versions have been inspected, so a new external test set is needed before presenting V3 as a final unbiased estimate.</li>
+    <li><strong>A face is not a feeling.</strong> People, and especially many autistic people, may feel something without showing the “typical” expression. The app only reads expressions, never what someone really feels.</li>
+    <li><strong>Not a medical tool.</strong> It does not diagnose, assess or measure autism or any condition.</li>
+    <li><strong>Training data is limited.</strong> About 2,000 photos from two public datasets, not balanced across ages or skin tones, so it may work worse for some people.</li>
+  </ul>
+</div>
+{% endblock %}

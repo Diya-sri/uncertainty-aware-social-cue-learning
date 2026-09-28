@@ -1,0 +1,13 @@
+{
+  "original_project_images": 2653,
+  "exact_duplicates_removed": 432,
+  "conflicting_duplicate_groups_dropped": 112,
+  "unique_images_retained": 1986,
+  "target_train": 1390,
+  "target_validation": 298,
+  "target_test": 298,
+  "fer2013_images_audited": 35887,
+  "fer2013_unique_non_conflicting": 33827,
+  "fer2013_cross_split_exact_groups": 531,
+  "fer2013_cross_split_near_duplicate_groups": 562
+}

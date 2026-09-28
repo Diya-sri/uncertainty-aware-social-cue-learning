@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Evidence lab · MOSAIC{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint:#4f6bc4"><div class="badge">{{ icon('reason', 28) }}</div><div>
+  <h1>Reason with evidence</h1><p>A face is one clue—not proof of what somebody feels.</p>
+</div></div>
+
+<div class="stage">
+  <div class="stack">
+    <div class="card">
+      <h2>1. Situation</h2><p class="story-text" id="story">Loading…</p>
+      <button class="btn secondary" id="new-story">Different situation</button>
+    </div>
+    <div class="camera" id="cam"><div class="cam-empty"><div class="big">{{ icon('camera', 48) }}</div>
+      <p>Camera evidence is optional. The system works without it.</p><button class="btn" data-click="start">Add expression cue</button>
+    </div></div>
+    <div class="row cam-controls"><button id="start" hidden>Start camera</button><button class="btn ghost" id="stop" disabled>Stop</button></div>
+    <p class="small muted" id="cam-status" role="status"></p>
+  </div>
+
+  <div class="card">
+    <h2>2. What does the person say?</h2>
+    <p class="muted">Self-report is the strongest evidence. Choose “not shared” if we do not know.</p>
+    <div class="self-report" id="self-report"></div>
+    <h2>3. Structured reasoning—not a verdict</h2>
+    <div class="bars" id="fusion-bars"></div>
+    <p class="small muted" id="decision-meta" aria-live="polite"></p>
+    <div class="evidence-grid" id="evidence"></div>
+    <div class="note"><span class="note-ico">{{ icon('message', 20) }}</span><span id="guidance">The respectful next step is to ask, listen and avoid assuming.</span></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const {EmotionCamera, renderBars, EMOTIONS:E} = FL, $ = id => document.getElementById(id);
+let context = null, face = null, selfReport = null;
+const empty = () => Object.fromEntries(Object.keys(E).map(k => [k, 0]));
+
+let paintVersion=0;
+async function paint() {
+  if (!context) return;
+  const version=++paintVersion;
+  const result=await fetch('/api/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({context:context.distribution,face,self_report:selfReport})}).then(r=>r.json());
+  if(version!==paintVersion || result.error)return;
+  const scores=empty(); result.possibilities.forEach(x=>scores[x.emotion]=x.probability);
+  renderBars($("fusion-bars"), scores);
+  $("decision-meta").textContent=result.decision.should_abstain ? "Insufficient evidence — the system abstained." : `Primary basis: ${result.decision.basis.replace('_',' ')} · confidence ${Math.round(result.decision.probability*100)}%`;
+  $("evidence").innerHTML=result.evidence.map(x=>`<div class="evidence"><strong>${({situation:'Situation',expression:'Expression',self_report:'Self-report'})[x.source] || x.source}</strong><span>${Math.round(x.weight*100)}%</span><small>${x.status[0].toUpperCase() + x.status.slice(1)} · ${x.explanation}</small></div>`).join('');
+  $("guidance").textContent=result.guidance;
+}
+async function loadStory(){ context=await fetch('/api/story/next').then(r=>r.json()); $("story").textContent=context.text; paint(); }
+$("new-story").onclick=loadStory;
+$("self-report").innerHTML=`<button class="chip report active" data-id="">Not shared</button>`+Object.keys(E).map(k=>`<button class="chip report" data-id="${k}">${E[k].emoji} ${E[k].name}</button>`).join('');
+$("self-report").onclick=e=>{const b=e.target.closest('.report');if(!b)return;selfReport=b.dataset.id||null;document.querySelectorAll('.report').forEach(x=>x.classList.toggle('active',x===b));paint();};
+const cam=new EmotionCamera($("cam"),{intervalMs:900,drawBoxes:true,onResult:r=>{face=r.faces?.[0]||null;paint();}});
+$("start").onclick=async()=>{try{await cam.start();$("stop").disabled=false;}catch(e){$("cam-status").textContent=e.message;}};
+$("stop").onclick=()=>{cam.stop();face=null;$("stop").disabled=true;paint();};
+loadStory();
+</script>
+{% endblock %}

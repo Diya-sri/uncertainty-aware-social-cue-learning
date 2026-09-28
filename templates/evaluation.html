@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Evaluation lab · MOSAIC{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint:#e2725b"><div class="badge">{{ icon('chart', 28) }}</div><div><h1>Evaluation lab</h1><p>What the model can—and cannot—support.</p></div></div>
+<div class="stats">
+  <div class="card stat"><div class="label">Held-out accuracy</div><div class="value">{{ '%.1f'|format(metrics.test_accuracy*100) }}%</div></div>
+  <div class="card stat"><div class="label">Test macro-F1</div><div class="value">{{ '%.3f'|format(metrics.test_macro_f1) }}</div></div>
+  <div class="card stat"><div class="label">Validation ECE</div><div class="value">{{ '%.3f'|format(metrics.validation_ece) }}</div></div>
+  <div class="card stat"><div class="label">Confident-only accuracy</div><div class="value">{{ '%.1f'|format(metrics.selective_test.accuracy*100) }}%</div><small>at {{ '%.1f'|format(metrics.selective_test.coverage*100) }}% coverage</small></div>
+</div>
+<div class="eval-grid">
+  <div class="card"><h2>Model comparison</h2><table><thead><tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th></tr></thead><tbody>
+    <tr><td>Majority class</td><td>29.9%</td><td>0.07</td></tr><tr><td>HOG + SVM</td><td>43.6%</td><td>0.36</td></tr>
+    <tr><td>MobileNetV2 ensemble</td><td>49.7%</td><td>0.442</td></tr>
+    <tr><td>EfficientNetB0 V1</td><td>57.1%</td><td>0.526</td></tr>
+    <tr><td>Calibrated EfficientNetB0 V2</td><td>61.4%</td><td>0.559</td></tr>
+    <tr><td><strong>Validation-selected EfficientNetB0 V3 (shipped)</strong></td><td><strong>62.1%</strong></td><td><strong>0.576</strong></td></tr>
+  </tbody></table></div>
+  <div class="card"><h2>Data audit</h2><ul><li>2,653 original project images inspected</li><li>432 exact duplicates removed</li><li>112 conflicting duplicate groups dropped</li><li>1,986 unique images retained</li><li>298-image held-out target test</li></ul></div>
+  <div class="card"><h2>Known failures</h2><ul><li>Neutral, anger and fear remain the weakest classes.</li><li>Performance changes across data sources.</li><li>No demographic subgroup claims are supported.</li><li>Expressions do not prove internal emotions.</li></ul></div>
+  <div class="card"><h2>Calibrated uncertainty</h2><p>Temperature scaling and the 42.5% abstention threshold were selected using validation predictions only.</p><p>On the benchmark, the fixed threshold accepted 218 of 298 images (73.2% coverage) with 69.7% accuracy. Report accuracy and coverage together.</p></div>
+</div>
+<div class="card" style="margin-top:20px"><h2>V3 evaluation artifacts</h2><div class="report-images"><img src="{{ url_for('report_file',name='confusion_matrix_v3.png') }}" alt="V3 confusion matrix"><img src="{{ url_for('report_file',name='confidence_coverage_v3.png') }}" alt="Validation confidence and coverage trade-off"></div><p class="small muted">Because this benchmark has been examined across versions, a new external test set is required for a final unbiased claim.</p></div>
+
+<div class="card system-evals" style="margin-top:20px">
+  <div class="eval-title"><div><span class="precision-kicker">MOSAIC-X</span><h2>Reasoning safety suite</h2></div><strong>{{ reasoning.cases }} cases</strong></div>
+  <p>Automated behavioral checks for the multimodal decision service. These verify designed system invariants; they are <strong>not</strong> evidence of real-world emotion accuracy.</p>
+  <div class="metric-checks">
+    {% for key, result in reasoning.metrics.items() %}<div><span>✓</span><strong>{{ key|replace('_',' ')|title }}</strong><small>{{ result.passed }}/{{ result.total }} passed</small></div>{% endfor %}
+  </div>
+  <details><summary>What is tested?</summary><ul><li>Explicit self-report overrides conflicting context and expression cues.</li><li>An expression prediction marked uncertain is ignored.</li><li>Context-only behavior stays consistent with the versioned scenarios.</li><li>Every response follows the structured output schema.</li></ul></details>
+</div>
+{% if feedback_rules %}
+<div class="card system-evals" style="margin-top:20px">
+  <div class="eval-title"><div><span class="precision-kicker">MOSAIC-X</span><h2>Check-in feedback benchmark (preliminary)</h2></div><strong>{{ feedback_rules.n }} held-out messages</strong></div>
+  <p>How well each reviewer agrees with a hand-labeled rubric for learner-written messages. Hard cases include sarcasm, polite pressure, presupposing questions, hedged checks and negation.</p>
+  <table><thead><tr><th>Metric</th><th>Always-majority</th><th>Rules (offline)</th>{% if feedback_llm %}<th>LLM ({{ feedback_llm.backend.split(':')[-1] }})</th>{% endif %}</tr></thead><tbody>
+    {% for key, name in [('assumes_feeling','Assumes a feeling (F1)'),('judgmental','Judgmental (F1)'),('pressuring','Pressuring (F1)'),('checks_in','Checks in (F1)')] %}
+    <tr><td>{{ name }}</td><td>0.000</td><td>{{ '%.3f'|format(feedback_rules.criteria[key].f1) }}</td>{% if feedback_llm %}<td>{{ '%.3f'|format(feedback_llm.criteria[key].f1) }}</td>{% endif %}</tr>
+    {% endfor %}
+    <tr><td><strong>All four criteria right</strong></td><td>{{ '%.1f'|format(feedback_rules.majority_baseline.exact_match*100) }}%</td><td><strong>{{ '%.1f'|format(feedback_rules.exact_match*100) }}%</strong></td>{% if feedback_llm %}<td><strong>{{ '%.1f'|format(feedback_llm.exact_match*100) }}%</strong></td>{% endif %}</tr>
+    <tr><td>Overall verdict right</td><td>{{ '%.1f'|format(feedback_rules.majority_baseline.verdict_accuracy*100) }}%</td><td>{{ '%.1f'|format(feedback_rules.verdict_accuracy*100) }}%</td>{% if feedback_llm %}<td>{{ '%.1f'|format(feedback_llm.verdict_accuracy*100) }}%</td>{% endif %}</tr>
+  </tbody></table>
+  <p class="small muted">The verdict can be right for the wrong reason: the rules call most sarcasm “not respectful” only because it has no question mark, while missing that it is judgmental. That is why all-four-criteria accuracy is reported alongside it.
+  {% if not feedback_llm %}Run <code>python scripts/evaluate_feedback.py --backend llm</code> with an API key to add the LLM column.{% endif %}
+  All messages were written and labeled by one person, so these numbers measure agreement with that rubric, not real-world helpfulness. No LLM results are reported yet.</p>
+</div>
+{% endif %}
+{% endblock %}

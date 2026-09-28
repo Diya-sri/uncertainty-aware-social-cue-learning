@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Communication practice · MOSAIC-X{% endblock %}
+{% block content %}
+<div class="page-head" style="--tint:#2f7d6d">
+  <div class="badge">{{ icon('chat', 28) }}</div>
+  <div><h1>Notice → Consider → Ask</h1><p>Practise responding to people without guessing what is inside their mind.</p></div>
+</div>
+
+<div class="practice-layout">
+  <section class="card practice-card" aria-live="polite">
+    <span class="step-label">Everyday situation</span>
+    <h2 id="situation">Loading…</h2>
+
+    <div class="practice-step">
+      <span class="step-number">1</span><div><strong>Notice facts</strong><p id="notice"></p></div>
+    </div>
+    <div class="practice-step">
+      <span class="step-number">2</span><div><strong>Consider possibilities</strong><ul id="possibilities"></ul></div>
+    </div>
+    <div class="practice-step">
+      <span class="step-number">3</span><div><strong>Choose a respectful response</strong><div id="responses" class="response-list"></div></div>
+    </div>
+
+    <div id="feedback" class="practice-feedback" hidden></div>
+
+    <div id="own" class="own-checkin" hidden>
+      <label for="own-text"><strong>Now try it in your own words</strong>
+        <small>Write what you would actually say. You'll get feedback on the wording, not on you.</small></label>
+      <textarea id="own-text" rows="2" maxlength="500" placeholder="e.g. I noticed… Would you like…?"></textarea>
+      <div class="row own-actions"><button class="btn" id="own-check">Check my wording</button>
+        <small id="own-privacy" class="muted"></small></div>
+      <div id="own-result" class="own-result" aria-live="polite" hidden></div>
+    </div>
+    <div class="row practice-actions"><span class="chip">Practised: <strong id="count">0</strong></span><button class="btn" id="next" hidden>Another situation →</button></div>
+  </section>
+
+  <aside class="card principle-card">
+    <span class="eyebrow">THE CORE IDEA</span>
+    <h2>A cue is information—not a verdict.</h2>
+    <p>Body language, facial expressions and context can suggest possibilities. Only the person can tell us what they feel or need.</p>
+    <div class="mini-principle"><span>{{ icon('eye', 20) }}</span><div><strong>Describe</strong><small>Say what you observed, without labels.</small></div></div>
+    <div class="mini-principle"><span>{{ icon('layers', 20) }}</span><div><strong>Leave room</strong><small>More than one explanation can fit.</small></div></div>
+    <div class="mini-principle"><span>{{ icon('message', 20) }}</span><div><strong>Ask gently</strong><small>Offer choices and respect “no.”</small></div></div>
+  </aside>
+</div>
+
+<div class="note"><span class="note-ico">{{ icon('shield', 20) }}</span><span>This activity teaches communication strategies, not “correct autistic behavior.” It does not diagnose, treat or score a person.</span></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const { Progress, Sound } = FL;
+const $ = id => document.getElementById(id);
+let current, answered = false;
+const recent = [];
+
+function updateCount() {
+  $("count").textContent = Progress.load().events.filter(e => e.activity === "communication").length;
+}
+async function loadScenario() {
+  answered = false; $("feedback").hidden = true; $("next").hidden = true;
+  $("own").hidden = true; $("own-result").hidden = true; $("own-text").value = "";
+  const res = await fetch(`/api/practice/next?exclude=${recent.join(",")}`);
+  current = await res.json();
+  recent.push(current.id); if (recent.length > 5) recent.shift();
+  $("situation").textContent = current.situation;
+  $("notice").textContent = current.notice;
+  $("possibilities").innerHTML = current.possibilities.map(x => `<li>${x}</li>`).join("");
+  $("responses").innerHTML = current.responses.map((x, i) => `<button class="response-option" data-index="${i}">${x}</button>`).join("");
+}
+$("responses").addEventListener("click", e => {
+  const button = e.target.closest(".response-option");
+  if (!button || answered) return;
+  answered = true;
+  const pick = Number(button.dataset.index), good = pick === current.best;
+  document.querySelectorAll(".response-option").forEach((b, i) => {
+    b.disabled = true; b.classList.toggle("best", i === current.best); b.classList.toggle("picked-wrong", i === pick && !good);
+  });
+  $("feedback").innerHTML = `<strong>${good ? "Thoughtful choice" : "A gentler option is highlighted."}</strong><span>${current.why}</span>`;
+  $("feedback").hidden = false; $("next").hidden = false; $("own").hidden = false;
+  Progress.add({ activity: "communication", scenario: current.id, success: good });
+  updateCount(); Sound.play(good ? "success" : "try");
+});
+$("next").onclick = loadScenario;
+
+const LABELS = { assumes_feeling: "Assumes a feeling", judgmental: "Sounds judging",
+                 pressuring: "Adds pressure", no_check_in: "No question or offer" };
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
+
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("own-privacy").textContent = s.feedback_sent_to_ai_provider
+    ? "Sent to the configured AI provider for feedback. Do not enter private or sensitive information."
+    : "Processed by this app’s server using offline rules. It is not saved or sent to an external AI provider.";
+}).catch(() => {});
+
+$("own-check").onclick = async () => {
+  const message = $("own-text").value.trim();
+  if (!message) { $("own-text").focus(); return; }
+  $("own-check").disabled = true;
+  const box = $("own-result"); box.replaceChildren(); box.hidden = false;
+  try {
+    const res = await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" },
+                                               body: JSON.stringify({ message }) });
+    const data = await res.json();
+    if (!res.ok) { box.append(el("span", "", data.error || "Something went wrong.")); return; }
+    box.classList.toggle("good", data.respectful);
+    box.append(el("strong", "", data.respectful ? "This leaves room for them to answer" : "A few things to consider"));
+    if (data.issues.length) {
+      const ul = el("ul");
+      data.issues.forEach(i => { const li = el("li"); li.append(el("b", "", LABELS[i.id] + ": "), i.explanation || i.tip); ul.append(li); });
+      box.append(ul);
+    }
+    box.append(el("span", "own-suggestion", data.suggestion));
+    box.append(el("small", "muted", data.disclaimer));
+    Progress.add({ activity: "communication_own", success: data.respectful });
+  } catch { box.append(el("span", "", "Couldn't reach the feedback service.")); }
+  finally { $("own-check").disabled = false; }
+};
+updateCount(); loadScenario();
+</script>
+{% endblock %}

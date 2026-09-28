@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block content %}
+<section class="hero hero-x">
+  <div class="hero-copy">
+    <span class="eyebrow">UNCERTAINTY-AWARE · PRIVACY-FIRST · EVALUATED</span>
+    <h1>Social cues are more than a face.</h1>
+    <p>Practise noticing cues, considering several explanations and asking with kindness. Situational context and optional expression cues suggest possibilities; what a person says they feel comes first.</p>
+    <div class="hero-actions">
+      <a class="btn" href="{{ url_for('practice') }}">Start practising <span>→</span></a>
+      <a class="btn ghost" href="{{ url_for('reason') }}">Try evidence reasoning</a>
+    </div>
+    <div class="trust-row"><span>Can abstain</span><span>Self-report first</span><span>Images not saved</span></div>
+  </div>
+  <div class="hero-visual" aria-label="How MOSAIC-X combines evidence">
+    <div class="signal"><span>01</span><div><strong>Situation</strong><small>Several reactions may fit</small></div></div>
+    <div class="signal"><span>02</span><div><strong>Expression</strong><small>Optional, uncertain clue</small></div></div>
+    <div class="signal priority"><span>03</span><div><strong>Self-report</strong><small>The person's voice has priority</small></div></div>
+    <div class="signal-output"><span>Structured output</span><strong>Possibilities, evidence &amp; uncertainty</strong></div>
+  </div>
+</section>
+
+<section class="stats-strip" aria-label="Engineering highlights">
+  <a class="stat-item" style="--c:#2f7d6d" href="{{ url_for('evaluation') }}" data-i="0">
+    <strong>62.1%</strong><span>Calibrated accuracy</span><small>298-image held-out benchmark; 69.7% at 73% coverage when the model may abstain</small>
+  </a>
+  <a class="stat-item" style="--c:#e2725b" href="{{ url_for('evaluation') }}" data-i="1">
+    <strong>93% → 62%</strong><span>Leakage caught</span><small>An early 93% came from validation images copied from training. Rebuilt a leak-free split.</small>
+  </a>
+  <a class="stat-item" style="--c:#7c6fd6" href="{{ url_for('evaluation') }}" data-i="2">
+    <strong>77.4%</strong><span>Check-in feedback benchmark</span><small>Rule baseline, all four criteria right on 93 held-out messages (preliminary)</small>
+  </a>
+  <a class="stat-item" style="--c:#d99a1e" href="{{ url_for('evaluation') }}" data-i="3">
+    <strong>47 + 126</strong><span>Tests and reasoning checks</span><small>Unit and API tests in CI, plus a behavioral suite for the decision engine</small>
+  </a>
+</section>
+
+<div class="section-heading"><div><span class="eyebrow">CORE SYSTEM</span><h2>Notice, consider, ask, and measure it</h2></div><p>Every result includes uncertainty and clear limitations.</p></div>
+<div class="core-grid">
+  <a class="card core-card" href="{{ url_for('practice') }}" style="--c:#2f7d6d">
+    <div class="core-top"><span class="core-icon">{{ icon('chat', 24) }}</span><span class="core-num">01 · START HERE</span></div>
+    <h3>Communication practice</h3>
+    <p>Separate observable facts from assumptions, consider several explanations, choose a respectful check-in, then write your own and get feedback on the wording.</p>
+    <span class="go">Practise a situation →</span>
+  </a>
+  <a class="card core-card" href="{{ url_for('reason') }}" style="--c:#5b8fd6">
+    <div class="core-top"><span class="core-icon">{{ icon('reason', 24) }}</span><span class="core-num">02 · CORE EXPERIENCE</span></div>
+    <h3>Reason with evidence</h3>
+    <p>Combine situational context, optional expression probabilities and self-report through a versioned reasoning API with visible weights and abstention.</p>
+    <span class="go">Open evidence lab →</span>
+  </a>
+  <a class="card core-card" href="{{ url_for('evaluation') }}" style="--c:#e2725b">
+    <div class="core-top"><span class="core-icon">{{ icon('chart', 24) }}</span><span class="core-num">03 · TRANSPARENT AI</span></div>
+    <h3>Evaluation lab</h3>
+    <p>Held-out metrics, calibration, the data leakage audit, known failure modes and both benchmarks, reported with their limitations.</p>
+    <span class="go">Inspect the evidence →</span>
+  </a>
+</div>
+
+<div class="section-heading"><div><span class="eyebrow">PRACTICE ACTIVITIES</span><h2>Expression and feelings activities</h2></div><p>Camera activities are optional and never store images.</p></div>
+<div class="activity-list">
+  <a href="{{ url_for('learn') }}" style="--c:#5b8fd6"><i>{{ icon('search', 20) }}</i><strong>Explore expressions</strong><span>Webcam or photo upload with calibrated, confidence-aware feedback.</span></a>
+  <a href="{{ url_for('mirror') }}" style="--c:#efb92f"><i>{{ icon('smile', 20) }}</i><strong>Mirror game</strong><span>Hold an expression until the model recognises it. Low-confidence readings never count.</span></a>
+  <a href="{{ url_for('quiz') }}" style="--c:#6fae8c"><i>{{ icon('help', 20) }}</i><strong>Feelings quiz</strong><span>Short situations where more than one answer can be reasonable.</span></a>
+  <a href="{{ url_for('music') }}" style="--c:#ec7fae"><i>{{ icon('music', 20) }}</i><strong>Music feelings</strong><span>A timeline of expression readings while a song plays. Audio stays in the browser.</span></a>
+  <a href="{{ url_for('progress') }}" style="--c:#9483e6"><i>{{ icon('trend', 20) }}</i><strong>Progress</strong><span>Practice results over time, with export and erase. Stored only in this browser.</span></a>
+</div>
+
+<div class="note">
+  <span class="note-ico">{{ icon('info', 20) }}</span>
+  <span>This is a practice tool, not a diagnostic or medical device. Expression accuracy is 62.1%, so predictions can be wrong. See <a href="{{ url_for('about') }}">how it works</a>.</span>
+</div>
+{% endblock %}

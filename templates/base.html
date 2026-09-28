@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MOSAIC-X{% endblock %}</title>
+  <meta name="description" content="MOSAIC-X combines context, optional expression cues and self-report through transparent, uncertainty-aware reasoning.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-{{ request.endpoint or 'none' }}">
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true">🧩</span><span>MOSAIC<small>X</small></span></a>
+      <button class="icon-btn menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav" aria-label="Menu">☰</button>
+      <nav class="nav" id="nav" aria-label="Main">
+        {% for ep, label in [('practice','Practice'), ('reason','Reason'), ('evaluation','Evaluation'), ('learn','Explore'), ('quiz','Quiz'), ('progress','Progress'), ('about','About')] %}
+        <a href="{{ url_for(ep) }}" {% if request.endpoint == ep %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+      <button id="sound-toggle" class="icon-btn" aria-pressed="true" aria-label="Sound on or off" title="Sound on/off"></button>
+    </div>
+  </header>
+  <div id="model-banner" class="banner" role="status" hidden><div></div></div>
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer class="footer">
+    <div>
+      <span>Camera images are sent to this app's server for temporary inference, are not intentionally stored, and are not forwarded to a third party.</span>
+      <span>A practice tool, not a medical device · <a href="{{ url_for('about') }}">How it works</a></span>
+    </div>
+  </footer>
+  <script>window.EMOTIONS = {{ EMOTIONS | tojson }};</script>
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

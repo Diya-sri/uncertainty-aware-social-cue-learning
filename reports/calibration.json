@@ -1,0 +1,98 @@
+{
+  "model": "70% calibrated linear head + 30% PCA-256 RBF-SVM",
+  "ensemble_temperature": 1.0,
+  "unsure_below": 0.75,
+  "target_answered_accuracy": 0.9,
+  "high_precision": {
+    "threshold": 0.75,
+    "coverage": 0.1242,
+    "accuracy": 0.9189,
+    "answered_images": 37,
+    "correct_images": 34
+  },
+  "test": {
+    "accuracy_all": 0.4966,
+    "ece": 0.0443,
+    "nll": 1.3474,
+    "mean_confidence": 0.5116,
+    "answers_given": 0.6711,
+    "accuracy_when_answering": 0.615
+  },
+  "selective_curve_test": [
+    {
+      "threshold": 0.2,
+      "coverage": 1.0,
+      "accuracy": 0.4966
+    },
+    {
+      "threshold": 0.25,
+      "coverage": 0.9799,
+      "accuracy": 0.5
+    },
+    {
+      "threshold": 0.3,
+      "coverage": 0.8926,
+      "accuracy": 0.5226
+    },
+    {
+      "threshold": 0.35,
+      "coverage": 0.8054,
+      "accuracy": 0.5417
+    },
+    {
+      "threshold": 0.4,
+      "coverage": 0.6711,
+      "accuracy": 0.615
+    },
+    {
+      "threshold": 0.45,
+      "coverage": 0.5604,
+      "accuracy": 0.6587
+    },
+    {
+      "threshold": 0.5,
+      "coverage": 0.4564,
+      "accuracy": 0.6912
+    },
+    {
+      "threshold": 0.55,
+      "coverage": 0.3456,
+      "accuracy": 0.7864
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.2819,
+      "accuracy": 0.7976
+    },
+    {
+      "threshold": 0.65,
+      "coverage": 0.2148,
+      "accuracy": 0.8438
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.1611,
+      "accuracy": 0.8958
+    },
+    {
+      "threshold": 0.75,
+      "coverage": 0.1242,
+      "accuracy": 0.9189
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.094,
+      "accuracy": 0.9643
+    },
+    {
+      "threshold": 0.85,
+      "coverage": 0.0772,
+      "accuracy": 0.9565
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.0503,
+      "accuracy": 0.9333
+    }
+  ]
+}

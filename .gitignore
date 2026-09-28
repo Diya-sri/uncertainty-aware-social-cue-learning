@@ -1,0 +1,40 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Private/raw data and generated personal fixtures
+data/raw/
+data/split*/
+data/fer2013/
+tests/.face_fixture.jpg
+
+# LLM evaluation may contain submitted message text and provider output
+reports/feedback_llm_cache.jsonl
+
+# Redundant experiment outputs (the selected model lives in models/emotion_model.keras).
+v3_results/
+
+# Local/runtime files
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/
+
+# Trained weights are not published until the training datasets' licenses are confirmed.
+models/*.keras
+models/*.npz
+models/*.joblib
+models/*.h5

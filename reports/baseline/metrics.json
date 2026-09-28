@@ -1,0 +1,85 @@
+{
+  "model": "HOG + LinearSVC",
+  "chosen_C": 0.0005,
+  "test_accuracy": 0.4362,
+  "test_macro_f1": 0.3633,
+  "test_images": 298,
+  "per_source_accuracy": {
+    "general": 0.3575,
+    "kids": 0.6154
+  },
+  "confusion_matrix": [
+    [
+      4,
+      7,
+      2,
+      4,
+      7,
+      5,
+      1
+    ],
+    [
+      5,
+      12,
+      2,
+      3,
+      3,
+      4,
+      1
+    ],
+    [
+      5,
+      1,
+      9,
+      5,
+      1,
+      4,
+      5
+    ],
+    [
+      9,
+      1,
+      1,
+      66,
+      4,
+      4,
+      4
+    ],
+    [
+      7,
+      4,
+      5,
+      8,
+      5,
+      4,
+      5
+    ],
+    [
+      1,
+      4,
+      4,
+      13,
+      4,
+      17,
+      2
+    ],
+    [
+      1,
+      1,
+      7,
+      5,
+      2,
+      3,
+      17
+    ]
+  ],
+  "labels": [
+    "anger",
+    "disgust",
+    "fear",
+    "happiness",
+    "neutral",
+    "sadness",
+    "surprise"
+  ]
+}
