@@ -6,7 +6,7 @@
 
 [Launch the Social-Cue Learning App](https://uncertainty-aware-social-cue-learning.onrender.com)
 
-> Hosted on Render’s free tier. The first load after inactivity may take up to one minute.
+> The free deployment may take up to one minute to start after inactivity.
 
 **Notice cues. Consider possibilities. Ask with kindness.**
 
