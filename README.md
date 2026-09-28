@@ -1,5 +1,13 @@
 # MOSAIC-X: An Uncertainty-Aware Social-Cue Learning System
 
+*Notice cues. Consider possibilities. Ask with kindness.*
+
+## Live Demo
+
+[Launch the Social-Cue Learning App](https://uncertainty-aware-social-cue-learning.onrender.com)
+
+> Hosted on Render’s free tier. The first load after inactivity may take up to one minute.
+
 **Notice cues. Consider possibilities. Ask with kindness.**
 
 A privacy-focused Flask research prototype that helps learners explore **social cues without claiming to read minds**.
